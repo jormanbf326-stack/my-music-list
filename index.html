@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>我的专属歌单｜手机版</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui, -apple-system, sans-serif;}
+body{background:#0f0f11;color:#e8e8e8;padding:12px;padding-bottom:120px;}
+.player-box{width:100%;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:#000;margin-bottom:12px;}
+iframe{width:100%;height:100%;border:none;}
+.lyric-box{background:#1a1a20;border-radius:10px;padding:16px;min-height:140px;margin-bottom:12px;white-space:pre-line;font-size:15px;line-height:1.7;color:#ccccdd;overflow-y:auto;max-height:220px;}
+.lyric-title{font-size:16px;margin-bottom:8px;color:#fff;font-weight:bold;}
+.ctrl{display:flex;gap:10px;margin-bottom:14px;}
+.ctrl button{flex:1;padding:12px 0;border:0;border-radius:8px;background:#3955dd;color:#fff;font-size:16px;}
+h2{font-size:18px;margin:10px 0;}
+.item{padding:12px 10px;margin:6px 0;background:#1b1b24;border-radius:8px;font-size:15px;cursor:pointer;}
+.item.active{background:#303468;color:#c8d6ff;}
+</style>
+</head>
+<body>
+<div class="player-box">
+<iframe id="iframePlayer" allowfullscreen allow="autoplay"></iframe>
+</div>
+
+<div class="lyric-box">
+<div class="lyric-title" id="lyricTitle">歌词</div>
+<div id="lyricText">选中一首歌开始播放</div>
+</div>
+
+<div class="ctrl">
+<button onclick="prevSong()">⬅ 上一首</button>
+<button onclick="nextSong()">下一首 ➡</button>
+</div>
+
+<h2>🎵 歌单列表</h2>
+<div id="songList"></div>
+
+<script>
+const songs = [
+  {
+    title:"来自天堂的魔鬼 - 邓紫棋",
+    bv:"BV1CN411Z7Xs",
+    lyric:"夜里做了美丽的噩梦\n想清醒我却抵不过心动\n哦梦里你是无底的黑洞\n我无力抗拒失重\n我的意识自控 脉搏流动\n全被你神秘引力操控\n亲爱的你是危险的迷宫\n我找不到出口\nYou took my heart away away away\n我的头都在下沉\nYou took my heart away away away\n原来你是来自天堂的魔鬼"
+  },
+  {
+    title:"摩天动物园 - 邓紫棋",
+    bv:"BV14X4y1s7ag",
+    lyric:"欢迎来到摩天动物园\n人性原始一面\n文明只是华丽的谎言\n欢迎来到摩天动物园\n我们都有兽性的一面\n别以为你特别\n谁不是戴着面具表演\n弱肉强食的世界\n是不变的定律 别侥幸"
+  },
+  {
+    title:"泡沫 - 邓紫棋",
+    bv:"BV1ZG4y187f2",
+    lyric:"美丽的泡沫\n虽然一刹花火\n你所有承诺\n全部都太脆弱\n而你的轮廓\n怪我没有看破\n才如此难过\n相爱的把握\n要如何再搜索\n相拥着寂寞\n难道就不寂寞\n爱本是泡沫\n怪我没有看破\n才如此难过"
+  },
+  {
+    title:"句号 - 邓紫棋",
+    bv:"BV1VN796nEV2",
+    lyric:"可惜我们终于来到\n一个句号\n窗外不愿飞的蜂鸟\n也在哀悼\n再也不会想要去和你争吵\n我们都把各自放掉\n该划上句号\n曾经紧紧拥抱\n如今各自走掉\n谢谢你曾经给我的美好"
+  },
+  {
+    title:"光年之外 - 邓紫棋",
+    bv:"BV1VN796nEV2",
+    lyric:"感受停在我发端的指尖\n如何瞬间 冻结时间\n记住望着我坚定的双眼\n也许已经 没有明天\n面对浩瀚的星海\n我们微小得像尘埃\n漂浮在 一片无奈\n缘分让我们相遇乱世以外\n命运却要我们危难中相爱"
+  },
+  {
+    title:"野心家 - 张靓颖",
+    bv:"BV1btJdzgEir",
+    lyric:"我是追着光的野心家\n不怕风雨狠狠拍打\n伤疤 都是勋章啊\n跌跌撞撞 也不放下\n我是不服输的野心家\n穿过迷雾不肯作罢\n哪怕 世界喧哗\n我的方向 自己回答"
+  },
+  {
+    title:"天下无双 - 张靓颖",
+    bv:"BV1j5Jg6GELt",
+    lyric:"穿越红尘的悲欢惆怅\n和你贴心的流浪\n刺透遍野的青山和荒凉\n有你的梦伴着花香飞翔\n今生因你痴狂\n此爱天下无双\n剑的影子 水的波光\n只是过往 是过往"
+  },
+  {
+    title:"我的梦 - 张靓颖",
+    bv:"BV1btJdzgEir",
+    lyric:"一直地一直地往前走\n疯狂的世界\n迎着痛把眼中所有梦\n都交给时间\n想飞就用心地去飞\n谁不经历狼狈\n我想我会忽略失望的灰\n拥抱遗憾的美\n我的梦说别停留等待\n就让光芒折射泪湿的瞳孔\n映出心中最想拥有的彩虹"
+  },
+  {
+    title:"画心 - 张靓颖",
+    bv:"BV1dihPzAEha",
+    lyric:"看不穿 是你失落的魂魄\n猜不透 是你瞳孔的颜色\n一阵风 一场梦\n爱如生命般莫测\n你的心 到底被什么蛊惑\n你的轮廓 在黑夜之中淹没\n看桃花 开出怎样的结果\n看着你抱着我\n目光似月色寂寞\n就让你 在别人怀里快乐"
+  },
+  {
+    title:"姑娘 - 陈楚生",
+    bv:"BV17FyQBnE3R",
+    lyric:"姑娘 姑娘 不要悲伤\n你的眼睛 还会发亮\n风吹过脸庞 带走慌张\n前路漫长 还有星光\n姑娘 姑娘 别再回望\n那些过往 慢慢遗忘\n心有远方 就有方向\n你会遇见温柔晴朗"
+  },
+  {
+    title:"有没有人告诉你 - 陈楚生",
+    bv:"BV1hv4y1P7qA",
+    lyric:"当火车开入这座陌生的城市\n那是从来就没有见过的霓虹\n我打开离别时你送我的信件\n忽然感到无比的思念\n看不见雪的冬天不夜的城市\n我听见有人欢呼有人在哭泣\n早习惯穿梭充满诱惑的黑夜\n但却无法忘记你的脸\n有没有人曾告诉你 我很爱你"
+  },
+  {
+    title:"瘾 - 陈楚生",
+    bv:"BV1MzkBBbE97",
+    lyric:"我愿意 就这样沉溺\n在你的温柔里 不能清醒\n明明知道这是一种瘾\n却舍不得抽离\n回忆一点点累积\n在心底 挥之不去\n戒不掉的想念 藏在夜里\n反复提醒 我还在意"
+  },
+  {
+    title:"象人(Live) - 张弛｜音乐缘计划",
+    bv:"BV1tLCuBjEif",
+    lyric:"我是藏在皮囊之下的象人\n裹着一层一层笨拙的认真\n世人只看见扭曲的裂痕\n看不见我滚烫灵魂\n如果丑陋是我与生俱来的本分\n能不能允许我 也想被温柔辨认\n我也渴望 一个拥抱的温存\n不被世俗 划分成异类的人"
+  },
+  {
+    title:"装货(Live) - 薛之谦/欧阳娜娜｜音乐缘计划",
+    bv:"BV1TaUjBjEiU",
+    lyric:"我装着洒脱 装着快乐\n装成无关紧要的过客\n假装所有难过 都不算什么\n在人群里 扮演合格\n我装着平和 装着不渴\n装着早就放下了执着\n可深夜的角落 心事在拉扯\n原来伪装 也是一种负荷"
+  },
+  {
+    title:"魔鬼中的天使 - 田馥甄",
+    bv:"BV1nV411V7xw",
+    lyric:"把太细的神经割掉\n会不会比较睡得着\n我的心有座灰色的监牢\n关着一票黑色念头 在吼叫\n把太硬的脾气抽掉\n会不会比较被明了\n你可以重重把我给打倒\n但是想都别想我求饶\n你是魔鬼中的天使\n所以送我心碎的方式\n是让我笑到最后一秒为止\n才发现自己胸口插了一把刀子"
+  },
+  {
+    title:"笼 - 张碧晨",
+    bv:"BV1mY4y1Y7tP",
+    lyric:"光 照进无声的巷\n谁被困在过往\n逃不开 命运织的网\n欲望慢慢生长\n温柔化作围墙\n困住所有 向往\n原来爱是一座笼\n困住心动 也困住痛\n逃不出的梦\n反复相拥 反复落空"
+  },
+  {
+    title:"阿楚姑娘 - 袁娅维",
+    bv:"BV1qs411Z7aX",
+    lyric:"在距离城市很远的地方\n在我那沃野炊烟的故乡\n有一个叫烽火台的村庄\n我曾和一个叫阿楚的姑娘\n彼此相依一起看月亮\n嗅着那桂花淡淡的香\n那夜的月光仍在天空发亮\n今夜它却格外得让人心伤"
+  },
+  {
+    title:"给我一个理由忘记 - A-Lin",
+    bv:"BV17s411V7dT",
+    lyric:"雨都停了 这片天 为什么呢\n我还记得 你说我们要快乐\n深夜里的脚步声 总是刺耳\n害怕寂寞 就让狂欢的城市陪我关灯\n只是哪怕周围再多人\n感觉还是一个人\n每当我笑了 心却狠狠地哭着\n给我一个理由忘记 那么爱我的你"
+  },
+  {
+    title:"失落沙洲 - 徐佳莹",
+    bv:"BV1Wt411z7aM",
+    lyric:"我不是一定要你回来\n只是当又一个人看海\n回头才发现 你不在\n留下我迂回的徘徊\n我不是一定要你回来\n只是当又把回忆翻开\n除了你之外的空白\n还有谁能来教我爱"
+  },
+  {
+    title:"淋雨一直走 - 张韶涵",
+    bv:"BV1Kb411n7zR",
+    lyric:"淋雨一直走\n是一颗宝石就该闪烁\n人都应该有梦\n有梦就别怕痛\n淋雨一直走\n是道阳光就该暖和\n人都应该有梦\n有梦就别怕痛\n有前面盘旋的秃鹰\n有背后尖酸的耳语\n黑色的童话 是给长大的洗礼"
+  }
+];
+let cur = 0;
+const iframe = document.getElementById('iframePlayer');
+const lyricTitle = document.getElementById('lyricTitle');
+const lyricText = document.getElementById('lyricText');
+const listDom = document.getElementById('songList');
+
+function renderList(){
+  listDom.innerHTML = '';
+  songs.forEach((s,i)=>{
+    const div = document.createElement('div');
+    div.className = 'item' + (i===cur?' active':'');
+    div.innerText = s.title;
+    div.onclick = ()=>play(i);
+    listDom.appendChild(div);
+  })
+}
+
+function play(idx){
+  cur = idx;
+  const s = songs[cur];
+  iframe.src = `https://player.bilibili.com/player.html?bvid=${s.bv}&danmaku=0&autoplay=0`;
+  lyricTitle.innerText = s.title;
+  lyricText.innerText = s.lyric;
+  renderList();
+}
+function nextSong(){
+  cur = (cur+1) % songs.length; play(cur);
+}
+function prevSong(){
+  cur = (cur -1 + songs.length) % songs.length; play(cur);
+}
+renderList();
+</script>
+</body>
+</html>
